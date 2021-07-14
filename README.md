@@ -20,4 +20,4 @@ This repository will contain the implementation of the SNS programming assignmen
 
 # Some rough work record
 ## original vs distorted record graph 
-[Original vs Distorted]("OriginalVsDistorted.png")
+![Original vs Distorted](OriginalVsDistorted.png)
