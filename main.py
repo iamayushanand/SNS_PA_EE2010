@@ -10,9 +10,9 @@ plt.figure()
 
 plt.subplot(1,2,1)
 plt.title("original temperature record")
-plt.stem(X,range(length))
+plt.stem(range(length),X)
 
 plt.subplot(1,2,2)
 plt.title("Distorted temperature record")
-plt.stem(Y,range(length))
+plt.stem(range(length),Y)
 plt.show()
