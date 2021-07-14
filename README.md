@@ -18,3 +18,6 @@ This repository will contain the implementation of the SNS programming assignmen
     * Library dependencies mention
     * Instructions on running the code. 
 
+# Some rough work record
+## original vs distorted record graph 
+![Original vs Distorted]("OriginalVsDistorted.png")
