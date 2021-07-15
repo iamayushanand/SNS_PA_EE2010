@@ -21,3 +21,6 @@ This repository will contain the implementation of the SNS programming assignmen
 # Some rough work record
 ## original vs distorted record graph 
 ![Original vs Distorted](OriginalVsDistorted.png)
+
+## Denoising with [1/n 1/n ... 1/n] kernel
+![denoising](denoising.png)
