@@ -2,6 +2,8 @@
 This repository contains the implementation of the SNS programming assignment.
 For the detailed explanation and analysis check out the report.pdf file.
 
+All concepts were implemented from scratch.
+
 # original vs distorted record graph 
 ![Original vs Distorted](OriginalVsDistorted.png)
 
