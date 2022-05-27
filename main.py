@@ -3,66 +3,95 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 from tqdm import tqdm
+from utils import *
+
+'''
+The section of code below is used for reading the input from csv File.
+'''
 data=pd.read_csv("data.csv")
 length=len(data['x[n]'])
 X=data['x[n]']
 Y=data['y[n]']
 
-#plt.figure()
+'''
+The section of the code below contains metrics used to evaluate our models.
+'''
+def MSE(x):
+    return np.mean((X-x)**2)
 
-#plt.subplot(2,1,1)
-#plt.title("original temperature record")
-#plt.stem(range(length),X)
-
-#plt.subplot(2,1,2)
-#plt.title("Distorted temperature record")
-#plt.stem(range(length),Y)
-#plt.show()
-
-def convolve(signal,kernel):
-    output=np.zeros(len(signal))
-    for n in range(len(signal)):
-        accumulated=0
-        for i in range(len(kernel)):
-            
-            shifted_i=i-(len(kernel)//2)
-            if n+shifted_i>=0 and n+shifted_i<len(signal):
-               accumulated+=signal[n+shifted_i]*kernel[i] 
-        output[n]=accumulated
-    return output
-def deNoise(signal,n=3):
-    return convolve(signal, np.ones(n)/n)
-def BlurFourier(w):
-    return (np.cos(w/2))**4
-def Fourier(signal,w):
-    ans=0
-    for n in range(len(signal)):
-        expo=np.complex(0,-w*n)
-        ans+=signal[n]*np.exp(expo)
-    return ans
-def Inv(signal,n):
-    N=50
-    ans=0
-    for r in range(int(np.floor(N*2*math.pi))):
-        expo=np.complex(0,r*n/N)
-        ans+=signal(r/N)*np.exp(expo)
-    return ans/(2*math.pi)
-def sig(w):
-    signal=X
+def DeltaJmp(x):
+    return np.abs(np.diff(x))
+def DeltaMetric(x):
+    return DeltaJmp(x)[96]
+'''
+This is the function which returns that value of F(I)/F(h) for a particular value of angular frequency w.Because F(h) can attain
+values very close/equal to 0 we have decided to cap it at a certain threshold value so that is approximately resembles F(I)/F(h).
+More details are given in the Report.
+'''
+signal=deNoise(Y)# This is the signal which we are trying to deblurr, It is a global variable can be reset later
+def sig(w,T=0.7):
+    global signal
     denom=BlurFourier(w)
-    if denom<0.4:
-        denom=0.4
+    if denom<T:
+        denom+=T
+        #denom=T
+        #denom=1+T
     return Fourier(signal,w)/denom
-deblurred=np.zeros(length)
-for i in tqdm(range(length)):
-    deblurred[i]=Inv(sig,i)
+
+'''
+For performance improvements we precompute the signal values and store it in sig2 list. This drastically brings down
+the running time.
+'''
+sig2=[]
+def sig2C(N,T=0.7): #0.7 
+
+    for r in tqdm(range(N)):
+        sig2.append(sig(2*r*math.pi/N,T=T))
+'''
+The section of code below gets the deblurred signal.
+Params:
+    blurred : the blurred signal which needs to be deblurred. It is an array
+    Part : Number of partitions of riemann sum to be taken. By default it is set to 193
+'''
+def deBlur(blurred,Part=193):
+    global sig2
+    global signal
+    global length
+    sig2=[]
+    signal=blurred #resetting the global variable signal 
+    sig2C(Part) #precomputing sig2
+    deblurred=np.zeros(length)
+    for i in tqdm(range(length)):
+        deblurred[i]=Inv(sig2,i,N=Part) #ith index of deblurred corresponds to INV fourier transform for index i of the signal sig
+    return deblurred
+'''
+The section of the code below fetches the signals X1 and X2 as asked in the question.
+'''
+sig2=[]
+x1=deBlur(deNoise(Y,n=5))
 plt.figure()
-plt.stem(range(length),deblurred)
-#knl=np.array([1,4,6,4,1])/16
-#convolvedVals=convolve(Y,knl)
-#plt.figure()
-#for i in range(1,6):
-#    convolvedVals=deNoise(Y,i)
-#    plt.subplot(5,1,i)
-#    plt.stem(range(length),convolvedVals)
+plt.subplot(2,1,1)
+plt.title("X1")
+#plt.plot(range(length),X)
+#plt.plot(range(length),x1) # uncomment this part for seeing line plot of x1 
+plt.stem(range(length),x1)
+plt.legend(["X","X1"],loc="upper right")
+
+plt.subplot(2,1,2)
+plt.title("X2")
+x2=deNoise(deBlur(Y),n=5)
+#plt.plot(range(length),X)
+#plt.plot(range(length),x2) # uncomment this part for seeing line plot of x2 
+plt.stem(range(length),x2)
+plt.legend(["X","X2"],loc="upper right")
 plt.show()
+'''
+The section of code below displays the metrics for x1,x2 and Y.
+'''
+print("The mse of x1 is "+str(MSE(x1)))
+print("The mse of x2 is "+str(MSE(x2)))
+print("The mse of Y is "+str(MSE(Y)))
+print("---")
+print("The DeltaMetric for x1 is "+str(DeltaMetric(x1)))
+print("The DeltaMetric for x2 is "+str(DeltaMetric(x2)))
+print("The DeltaMetric for Y is "+str(DeltaMetric(Y)))
